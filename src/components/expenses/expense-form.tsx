@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -275,7 +274,7 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
               <FormItem>
                 <FormLabel>Category</FormLabel>
                 <Select
-                  onValuecha.ge={field.onChange}
+                  onValueChange={field.onChange}
                   defaultValue={field.value}
                   value={field.value}
                 >
