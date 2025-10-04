@@ -1,19 +1,13 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection } from '@/lib/mysql-index';
 import { Expense, User } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
 import React from 'react';
 
 export function RecentExpenses() {
-    const firestore = useFirestore();
-    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(
-        firestore ? query(collection(firestore, 'expenses'), orderBy('date', 'desc'), limit(5)) : null
-    );
-    const { data: users, isLoading: usersLoading } = useCollection<User>(
-        firestore ? collection(firestore, 'users') : null
-    );
+    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>('/api/expenses');
+    const { data: users, isLoading: usersLoading } = useCollection<User>('/api/users');
 
     const usersById = React.useMemo(() => {
         if (!users) return {};

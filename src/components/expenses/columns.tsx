@@ -23,8 +23,7 @@ import { Expense, User } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection } from '@/lib/mysql-index';
 
 const StatusIcon = ({ status }: { status: Expense['status'] }) => {
   switch (status) {
@@ -40,8 +39,7 @@ const StatusIcon = ({ status }: { status: Expense['status'] }) => {
 };
 
 const UserCell = ({ userId }: { userId: string }) => {
-    const firestore = useFirestore();
-    const { data: users, isLoading } = useCollection<User>(firestore ? collection(firestore, 'users') : null);
+    const { data: users, isLoading } = useCollection<User>('/api/users');
 
     const user = React.useMemo(() => users?.find(u => u.id === userId), [users, userId]);
 

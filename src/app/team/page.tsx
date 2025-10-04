@@ -12,15 +12,13 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection } from "@/lib/mysql-index";
 import { User } from "@/lib/types";
-import { collection } from "firebase/firestore";
 import React from "react";
 import Link from "next/link";
 
 export default function TeamPage() {
-  const firestore = useFirestore();
-  const { data: users, isLoading } = useCollection<User>(firestore ? collection(firestore, 'users') : null);
+  const { data: users, isLoading } = useCollection<User>('/api/users');
 
   const usersById = React.useMemo(() => {
     if (!users) return {};

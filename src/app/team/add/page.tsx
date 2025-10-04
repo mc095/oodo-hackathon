@@ -25,8 +25,8 @@ import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useCollection, useFirestore } from '@/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { useCollection } from '@/lib/mysql-index';
+import { DataAPI } from '@/lib/data-api';
 import { User, UserRole } from '@/lib/types';
 
 const formSchema = z.object({
@@ -41,11 +41,7 @@ type UserFormValues = z.infer<typeof formSchema>;
 export default function AddUserPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const firestore = useFirestore();
-
-  const { data: users, isLoading: isLoadingUsers } = useCollection<User>(
-    firestore ? collection(firestore, 'users') : null
-  );
+  const { data: users, isLoading: isLoadingUsers } = useCollection<User>('/api/users');
 
   const managers = React.useMemo(() => 
     users?.filter(user => user.role === 'Manager' || user.role === 'Admin') || [], 
@@ -62,14 +58,12 @@ export default function AddUserPage() {
   });
 
   const onSubmit = async (values: UserFormValues) => {
-    if (!firestore) return;
-
     try {
       const newUser: Omit<User, 'id'> = {
         ...values,
         avatarUrl: `https://avatar.vercel.sh/${values.email}.png`, // Generate a default avatar
       };
-      await addDoc(collection(firestore, 'users'), newUser);
+      await DataAPI.createUser(newUser);
 
       toast({
         title: 'User Added',

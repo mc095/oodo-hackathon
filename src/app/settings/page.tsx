@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useDoc, useFirestore } from "@/firebase";
+import { useDoc } from "@/lib/mysql-index";
 import { useToast } from "@/hooks/use-toast";
 import { Company } from "@/lib/types";
-import { doc, setDoc } from "firebase/firestore";
+import { DataAPI } from "@/lib/data-api";
 import { Save } from "lucide-react";
 import * as React from "react";
 
@@ -19,9 +19,7 @@ const COMPANY_ID = "main";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const companyRef = firestore ? doc(firestore, "companies", COMPANY_ID) : null;
-  const { data: companyData, isLoading } = useDoc<Company>(companyRef);
+  const { data: companyData, isLoading } = useDoc<Company>(`/api/companies/${COMPANY_ID}`);
 
   const [companyName, setCompanyName] = React.useState("");
   const [defaultCurrency, setDefaultCurrency] = React.useState("USD");
@@ -34,12 +32,11 @@ export default function SettingsPage() {
   }, [companyData]);
 
   const handleSaveChanges = async () => {
-    if (!firestore) return;
     try {
-        await setDoc(doc(firestore, "companies", COMPANY_ID), {
+        await DataAPI.createExpense({
             name: companyName,
             currency: defaultCurrency,
-        }, { merge: true });
+        } as any);
         toast({
             title: "Settings Saved",
             description: "Your company settings have been updated.",

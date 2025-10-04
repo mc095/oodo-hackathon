@@ -7,6 +7,8 @@ export type User = {
   avatarUrl: string;
   role: UserRole;
   managerId?: string;
+  companyId?: string;
+  companyName?: string;
 };
 
 export type ExpenseStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -28,6 +30,7 @@ export type Company = {
     id: string;
     name: string;
     currency: string;
+    country: string;
 };
 
 // For currency API

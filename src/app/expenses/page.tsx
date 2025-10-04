@@ -14,16 +14,13 @@ import {
 } from '@/components/ui/sheet';
 import { ExpenseForm } from '@/components/expenses/expense-form';
 import { Expense } from '@/lib/types';
-import { useCollection, useFirestore, useUser } from '@/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { useCollection, useUser } from '@/lib/mysql-index';
+import { DataAPI } from '@/lib/data-api';
 
 export default function ExpensesPage() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  const firestore = useFirestore();
   const { data: user } = useUser();
-  const { data: expenses, isLoading } = useCollection<Expense>(
-    firestore ? collection(firestore, 'expenses') : null
-  );
+  const { data: expenses, isLoading } = useCollection<Expense>('/api/expenses');
 
   const sortedExpenses = React.useMemo(() => {
     if (!expenses) return [];
@@ -37,20 +34,22 @@ export default function ExpensesPage() {
   };
   
   const handleFormSubmit = async (newExpense: Omit<Expense, 'id' | 'approvers' | 'status' | 'userId'>) => {
-    if (!firestore || !user) return;
+    if (!user) return;
     
     const newExpenseWithDetails: Omit<Expense, 'id'> = {
       ...newExpense,
-      userId: user.uid,
+      userId: user.id,
       status: 'Pending',
       approvers: [], // Simplified for now
     };
 
     try {
-        await addDoc(collection(firestore, 'expenses'), newExpenseWithDetails);
+        await DataAPI.createExpense(newExpenseWithDetails);
         setIsSheetOpen(false);
+        // Refresh the page or trigger a reload of data
+        window.location.reload();
     } catch(e) {
-        console.error("Error adding document: ", e);
+        console.error("Error adding expense: ", e);
     }
   }
 
