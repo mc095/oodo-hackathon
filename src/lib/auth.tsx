@@ -33,6 +33,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     try {
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
+      
       const token = localStorage.getItem('auth_token');
       if (!token) {
         setIsLoading(false);
@@ -69,7 +74,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const { user, token } = await response.json();
-        localStorage.setItem('auth_token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', token);
+        }
         setUser(user);
         return true;
       }
@@ -82,17 +89,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+        }
+        localStorage.removeItem('auth_token');
       }
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      localStorage.removeItem('auth_token');
       setUser(null);
     }
   };
@@ -107,7 +116,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const { user, token } = await response.json();
-        localStorage.setItem('auth_token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', token);
+        }
         setUser(user);
         return true;
       }

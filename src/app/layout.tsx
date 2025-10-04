@@ -43,7 +43,6 @@ function MainLayout({
 }>) {
   return (
     <AuthProvider>
-      <AuthGuard>
       <SidebarProvider>
         <Sidebar variant="sidebar" collapsible="icon">
           <SidebarHeader>
@@ -122,7 +121,6 @@ function MainLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-      </AuthGuard>
     </AuthProvider>
   );
 }
