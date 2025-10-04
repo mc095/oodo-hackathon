@@ -1,3 +1,4 @@
+'use client';
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,15 +7,60 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useDoc, useFirestore } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { Company } from "@/lib/types";
+import { doc, setDoc } from "firebase/firestore";
 import { Save } from "lucide-react";
+import * as React from "react";
+
+// Assuming a single company document for simplicity
+const COMPANY_ID = "main";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const companyRef = firestore ? doc(firestore, "companies", COMPANY_ID) : null;
+  const { data: companyData, isLoading } = useDoc<Company>(companyRef);
+
+  const [companyName, setCompanyName] = React.useState("");
+  const [defaultCurrency, setDefaultCurrency] = React.useState("USD");
+
+  React.useEffect(() => {
+    if (companyData) {
+      setCompanyName(companyData.name);
+      setDefaultCurrency(companyData.currency);
+    }
+  }, [companyData]);
+
+  const handleSaveChanges = async () => {
+    if (!firestore) return;
+    try {
+        await setDoc(doc(firestore, "companies", COMPANY_ID), {
+            name: companyName,
+            currency: defaultCurrency,
+        }, { merge: true });
+        toast({
+            title: "Settings Saved",
+            description: "Your company settings have been updated.",
+        });
+    } catch (error) {
+        console.error("Error saving settings: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save settings. Please try again.",
+        });
+    }
+  };
+
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Settings">
-        <Button>
+        <Button onClick={handleSaveChanges} disabled={isLoading}>
           <Save className="mr-2 h-4 w-4" />
-          Save Changes
+          {isLoading ? "Saving..." : "Save Changes"}
         </Button>
       </PageHeader>
       
@@ -30,11 +76,11 @@ export default function SettingsPage() {
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company Name</Label>
-                <Input id="companyName" defaultValue="ExpenseFlow Inc." />
+                <Input id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Default Currency</Label>
-                <Select defaultValue="USD">
+                <Select value={defaultCurrency} onValueChange={setDefaultCurrency} disabled={isLoading}>
                   <SelectTrigger id="currency">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>

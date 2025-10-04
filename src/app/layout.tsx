@@ -1,4 +1,5 @@
 
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { UserNav } from '@/components/user-nav';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FirebaseClientProvider, useAuth, useUser } from '@/firebase';
+import { LogoutButton } from '@/components/logout-button';
 
 export const metadata: Metadata = {
   title: 'ExpenseFlow',
@@ -60,87 +63,86 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <SidebarProvider>
-          <Sidebar variant="sidebar" collapsible="icon">
-            <SidebarHeader>
-              <div className="flex items-center gap-2 p-2">
-                <Avatar className="size-8">
-                  <AvatarFallback>
-                    <Building className="text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-                <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
-                  ExpenseFlow
-                </h1>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <Link href="/">
-                    <SidebarMenuButton
-                      tooltip="Dashboard"
-                      className="font-headline"
-                    >
-                      <LayoutDashboard />
-                      <span>Dashboard</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Link href="/expenses">
-                    <SidebarMenuButton
-                      tooltip="Expenses"
-                      className="font-headline"
-                    >
-                      <Wallet />
-                      <span>Expenses</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Link href="/team">
-                    <SidebarMenuButton tooltip="Team" className="font-headline">
-                      <Users />
-                      <span>Team</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Link href="/settings">
-                    <SidebarMenuButton
-                      tooltip="Settings"
-                      className="font-headline"
-                    >
-                      <Settings />
-                      <span>Settings</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Logout" className="font-headline">
-                    <LogOut />
-                    <span>Logout</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarFooter>
-          </Sidebar>
-          <SidebarInset>
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:pb-4">
-              <div className="ml-auto flex items-center gap-4">
-                <UserNav />
-              </div>
-            </header>
-            <main className="flex-1 overflow-auto p-4 sm:px-6">
-              {children}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+        <FirebaseClientProvider>
+          <SidebarProvider>
+            <Sidebar variant="sidebar" collapsible="icon">
+              <SidebarHeader>
+                <div className="flex items-center gap-2 p-2">
+                  <Avatar className="size-8">
+                    <AvatarFallback>
+                      <Building className="text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
+                    ExpenseFlow
+                  </h1>
+                </div>
+              </SidebarHeader>
+              <SidebarContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <Link href="/">
+                      <SidebarMenuButton
+                        tooltip="Dashboard"
+                        className="font-headline"
+                      >
+                        <LayoutDashboard />
+                        <span>Dashboard</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Link href="/expenses">
+                      <SidebarMenuButton
+                        tooltip="Expenses"
+                        className="font-headline"
+                      >
+                        <Wallet />
+                        <span>Expenses</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Link href="/team">
+                      <SidebarMenuButton tooltip="Team" className="font-headline">
+                        <Users />
+                        <span>Team</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Link href="/settings">
+                      <SidebarMenuButton
+                        tooltip="Settings"
+                        className="font-headline"
+                      >
+                        <Settings />
+                        <span>Settings</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarContent>
+              <SidebarFooter>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <LogoutButton />
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarFooter>
+            </Sidebar>
+            <SidebarInset>
+              <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:pb-4">
+                <div className="ml-auto flex items-center gap-4">
+                  <UserNav />
+                </div>
+              </header>
+              <main className="flex-1 overflow-auto p-4 sm:px-6">
+                {children}
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

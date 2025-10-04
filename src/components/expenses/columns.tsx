@@ -8,6 +8,7 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react';
+import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,9 +21,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Expense, User } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { getUserById } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 const StatusIcon = ({ status }: { status: Expense['status'] }) => {
   switch (status) {
@@ -36,6 +38,27 @@ const StatusIcon = ({ status }: { status: Expense['status'] }) => {
       return null;
   }
 };
+
+const UserCell = ({ userId }: { userId: string }) => {
+    const firestore = useFirestore();
+    const { data: users, isLoading } = useCollection<User>(firestore ? collection(firestore, 'users') : null);
+
+    const user = React.useMemo(() => users?.find(u => u.id === userId), [users, userId]);
+
+    if (isLoading) return 'Loading...';
+    if (!user) return 'Unknown User';
+
+    return (
+        <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className='font-medium'>{user.name}</span>
+        </div>
+    );
+};
+
 
 export const columns: ColumnDef<Expense>[] = [
   {
@@ -53,20 +76,11 @@ export const columns: ColumnDef<Expense>[] = [
     },
   },
   {
-    accessorKey: 'user',
+    accessorKey: 'userId',
     header: 'Submitted By',
     cell: ({ row }) => {
-      const user = getUserById(row.original.userId);
-      if (!user) return 'Unknown User';
-      return (
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span className='font-medium'>{user.name}</span>
-        </div>
-      );
+      const userId = row.original.userId;
+      return <UserCell userId={userId} />;
     },
   },
   {

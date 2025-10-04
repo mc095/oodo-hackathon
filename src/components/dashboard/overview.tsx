@@ -3,6 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
 const generateData = () => [
+  { name: 'Jan', total: 0 },
+  { name: 'Feb', total: 0 },
+  { name: 'Mar', total: 0 },
+  { name: 'Apr', total: 0 },
+  { name: 'May', total: 0 },
+  { name: 'Jun', total: 0 },
+  { name: 'Jul', total: 0 },
+  { name: 'Aug', total: 0 },
+  { name: 'Sep', total: 0 },
+  { name: 'Oct', total: 0 },
+  { name: 'Nov', total: 0 },
+  { name: 'Dec', total: 0 },
+];
+
+const generateRandomData = () => [
   { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
   { name: 'Feb', total: Math.floor(Math.random() * 5000) + 1000 },
   { name: 'Mar', total: Math.floor(Math.random() * 5000) + 1000 },
@@ -21,8 +36,9 @@ export function Overview() {
     const [data, setData] = useState<any[]>([]);
 
     useEffect(() => {
-        setData(generateData());
-    }, []);
+        // This will only run on the client, after initial hydration
+        setData(generateRandomData());
+    }, []); // Empty dependency array ensures this runs once on mount
 
 
   return (

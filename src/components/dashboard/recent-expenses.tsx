@@ -1,31 +1,51 @@
+'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { expenses, getUserById } from '@/lib/data';
+import { useCollection, useFirestore } from '@/firebase';
+import { Expense, User } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import React from 'react';
 
 export function RecentExpenses() {
-    const recentExpenses = [...expenses]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5);
+    const firestore = useFirestore();
+    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(
+        firestore ? query(collection(firestore, 'expenses'), orderBy('date', 'desc'), limit(5)) : null
+    );
+    const { data: users, isLoading: usersLoading } = useCollection<User>(
+        firestore ? collection(firestore, 'users') : null
+    );
 
-  return (
-    <div className="space-y-8">
-        {recentExpenses.map(expense => {
-            const user = getUserById(expense.userId);
-            if (!user) return null;
-            return (
-                <div key={expense.id} className="flex items-center">
-                    <Avatar className="h-9 w-9">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">{expense.vendor}</p>
+    const usersById = React.useMemo(() => {
+        if (!users) return {};
+        return users.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+        }, {} as { [key: string]: User });
+    }, [users]);
+
+    if (expensesLoading || usersLoading) {
+        return <div>Loading...</div>;
+    }
+
+    return (
+        <div className="space-y-8">
+            {expenses?.map(expense => {
+                const user = usersById[expense.userId];
+                if (!user) return null;
+                return (
+                    <div key={expense.id} className="flex items-center">
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="ml-4 space-y-1">
+                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                            <p className="text-sm text-muted-foreground">{expense.vendor}</p>
+                        </div>
+                        <div className="ml-auto font-medium">{formatCurrency(expense.amount, expense.currency)}</div>
                     </div>
-                    <div className="ml-auto font-medium">{formatCurrency(expense.amount, expense.currency)}</div>
-                </div>
-            )
-        })}
-    </div>
-  );
+                )
+            })}
+        </div>
+    );
 }

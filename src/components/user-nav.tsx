@@ -11,12 +11,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { users } from '@/lib/data';
-import { CreditCard, LogOut, Mail, User } from 'lucide-react';
+import { CreditCard, LogOut, Mail, User as UserIcon } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
-  // For demo purposes, we'll assume the first user is the logged-in user.
-  const currentUser = users[0];
+  const { data: user, isLoading } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login'); // Redirect to a login page after sign out
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Avatar className="h-9 w-9">
+        <AvatarFallback>?</AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  if (!user) {
+    // Optionally render a login button or redirect
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -24,11 +47,11 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage
-              src={currentUser.avatarUrl}
-              alt={currentUser.name}
+              src={user.photoURL ?? `https://avatar.vercel.sh/${user.email}.png`}
+              alt={user.displayName ?? 'User'}
               data-ai-hint="person portrait"
             />
-            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{user.displayName?.charAt(0) ?? user.email?.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -36,17 +59,17 @@ export function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none font-headline">
-              {currentUser.name}
+              {user.displayName}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {currentUser.email}
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
+            <UserIcon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
@@ -55,7 +78,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

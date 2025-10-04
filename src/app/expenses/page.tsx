@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { PlusCircle } from 'lucide-react';
-import { expenses as initialExpenses } from '@/lib/data';
 import { DataTable } from '@/components/expenses/data-table';
 import { columns } from '@/components/expenses/columns';
 import {
@@ -15,25 +14,44 @@ import {
 } from '@/components/ui/sheet';
 import { ExpenseForm } from '@/components/expenses/expense-form';
 import { Expense } from '@/lib/types';
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { addDoc, collection } from 'firebase/firestore';
 
 export default function ExpensesPage() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  const [expenses, setExpenses] = React.useState<Expense[]>(() => [...initialExpenses].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const firestore = useFirestore();
+  const { data: user } = useUser();
+  const { data: expenses, isLoading } = useCollection<Expense>(
+    firestore ? collection(firestore, 'expenses') : null
+  );
+
+  const sortedExpenses = React.useMemo(() => {
+    if (!expenses) return [];
+    // Create a new array to avoid mutating the original
+    return [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [expenses]);
+
 
   const handleNewExpense = () => {
     setIsSheetOpen(true);
   };
   
-  const handleFormSubmit = (newExpense: Omit<Expense, 'id' | 'approvers' | 'status' | 'userId'>) => {
-    const newExpenseWithId: Expense = {
+  const handleFormSubmit = async (newExpense: Omit<Expense, 'id' | 'approvers' | 'status' | 'userId'>) => {
+    if (!firestore || !user) return;
+    
+    const newExpenseWithDetails: Omit<Expense, 'id'> = {
       ...newExpense,
-      id: `exp_${Date.now()}`,
-      userId: 'usr_1', // Assuming current user is Admin User for now
+      userId: user.uid,
       status: 'Pending',
-      approvers: [{ userId: 'usr_2', status: 'Pending' }],
+      approvers: [], // Simplified for now
     };
-    setExpenses(prevExpenses => [newExpenseWithId, ...prevExpenses]);
-    setIsSheetOpen(false);
+
+    try {
+        await addDoc(collection(firestore, 'expenses'), newExpenseWithDetails);
+        setIsSheetOpen(false);
+    } catch(e) {
+        console.error("Error adding document: ", e);
+    }
   }
 
   return (
@@ -44,7 +62,7 @@ export default function ExpensesPage() {
           New Expense
         </Button>
       </PageHeader>
-      <DataTable columns={columns} data={expenses} />
+      <DataTable columns={columns} data={sortedExpenses} />
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="w-full max-w-2xl sm:w-[800px] sm:max-w-none overflow-y-auto">
           <SheetHeader>

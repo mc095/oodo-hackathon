@@ -15,9 +15,12 @@ export function formatCurrency(amount: number, currency: string = 'USD') {
 }
 
 export function formatDate(dateString: string) {
+  // Using UTC to prevent hydration errors due to timezone differences
+  // between server and client.
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC'
   });
 }
