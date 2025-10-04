@@ -267,7 +267,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎥 Video Presentation
 
-**Link:** [ExpenseFlow]([https://drive.google.com/uc?id=1iT63sjANfBtaLRuIyIMh_D4w1rOvfR5i&export=download](https://drive.google.com/file/d/1iT63sjANfBtaLRuIyIMh_D4w1rOvfR5i/view?usp=sharing)
+**Link:** [ExpenseFlow](https://drive.google.com/file/d/1iT63sjANfBtaLRuIyIMh_D4w1rOvfR5i/view?usp=sharing)
 
 ---
 
