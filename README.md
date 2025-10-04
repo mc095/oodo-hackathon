@@ -232,3 +232,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   <p>Built with ❤️ by the ExpenseFlow Team</p>
   <p>⭐ Star this repository if you found it helpful!</p>
 </div>
+
+
+---
+
+## 👥 Team Details
+
+**Team Name:** Oodo Hackers  
+**Reviewer:** Aman Patel (ampa)  
+
+### 🧑‍💻 Team Members
+
+- **Prasanna Kumar Raparla** *(Team Leader)*  
+  Email: prasannakumar0396@gmail.com  
+  Phone: 9392693465  
+  Passing Year: 2026
+
+- **Ganesh Vathumilli**  
+  Email: 22a81a05q0@sves.org.in  
+  Phone: 8008149866  
+  Passing Year: 2026
+
+- **Rasmitha Lekha Rambha**  
+  Email: rambhasmeth7024@gmail.com  
+  Phone: 9121487799  
+  Passing Year: 2026
+
+- **Andra Tulasi Lakshmi Tanya**  
+  Email: tanyakonapala@gmail.com  
+  Phone: 6302601497  
+  Passing Year: 2026
+
+---
+
+## 🎥 Video Presentation
+
+**Link:** [Add your Google Drive / Screencastify / Awesome Screenshot link here]  
+
+---
+
