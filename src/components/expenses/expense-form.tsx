@@ -35,18 +35,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { receiptOcrExpenseAutofill } from '@/ai/flows/receipt-ocr-expense-autofill';
 import { Separator } from '../ui/separator';
+import { Expense } from '@/lib/types';
 
 const formSchema = z.object({
   vendor: z.string().min(2, 'Vendor must be at least 2 characters.'),
   amount: z.coerce.number().positive('Amount must be a positive number.'),
   date: z.date({ required_error: 'A date is required.' }),
+  currency: z.string().min(1, 'Please select a currency.'),
   category: z.string().min(1, 'Please select a category.'),
   description: z.string().optional(),
   receipt: z.any().optional(),
 });
 
+type ExpenseFormValues = z.infer<typeof formSchema>;
+
 type ExpenseFormProps = {
-  onSubmitSuccess: () => void;
+  onSubmitSuccess: (data: Omit<Expense, 'id' | 'approvers' | 'status' | 'userId'>) => void;
 };
 
 export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
@@ -54,21 +58,27 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       vendor: '',
       amount: 0,
+      currency: 'USD',
+      description: ''
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: ExpenseFormValues) {
+    const { receipt, ...expenseData } = values;
+    onSubmitSuccess({
+        ...expenseData,
+        date: values.date.toISOString(),
+    });
     toast({
       title: 'Expense Submitted',
       description: 'Your expense has been successfully submitted for approval.',
     });
-    onSubmitSuccess();
+    form.reset();
   }
 
   const handleFileChange = async (
@@ -175,12 +185,12 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className='col-span-2'>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="0.00" {...field} />
@@ -189,48 +199,74 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
-              name="date"
+              name="currency"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of Expense</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={'outline'}
-                          className={cn(
-                            'pl-3 text-left font-normal',
-                            !field.value && 'text-muted-foreground'
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, 'PPP')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date('1900-01-01')
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="CAD">CAD</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date of Expense</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date('1900-01-01')
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -239,8 +275,9 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
               <FormItem>
                 <FormLabel>Category</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValuecha.ge={field.onChange}
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -270,6 +307,7 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                   <Textarea
                     placeholder="A brief description of the expense (optional)"
                     {...field}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormMessage />
