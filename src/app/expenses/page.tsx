@@ -18,7 +18,7 @@ import { Expense } from '@/lib/types';
 
 export default function ExpensesPage() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  const [expenses, setExpenses] = React.useState<Expense[]>(initialExpenses);
+  const [expenses, setExpenses] = React.useState<Expense[]>(() => [...initialExpenses].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
   const handleNewExpense = () => {
     setIsSheetOpen(true);

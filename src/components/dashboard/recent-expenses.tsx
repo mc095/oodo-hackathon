@@ -3,7 +3,9 @@ import { expenses, getUserById } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 
 export function RecentExpenses() {
-    const recentExpenses = expenses.slice(0, 5);
+    const recentExpenses = [...expenses]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
 
   return (
     <div className="space-y-8">
