@@ -103,6 +103,66 @@ export async function initializeDatabase() {
     )
   `);
 
+  // Approval workflow tables
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS approval_workflows (
+      id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      company_id VARCHAR(36) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS approval_steps (
+      id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      workflow_id VARCHAR(36) NOT NULL,
+      step_order INT NOT NULL,
+      approver_type ENUM('Manager', 'Finance', 'Director', 'Specific_User') NOT NULL,
+      specific_user_id VARCHAR(36),
+      is_manager_approver BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (workflow_id) REFERENCES approval_workflows(id) ON DELETE CASCADE,
+      FOREIGN KEY (specific_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS approval_rules (
+      id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      company_id VARCHAR(36) NOT NULL,
+      rule_type ENUM('Percentage', 'Specific_Approver', 'Hybrid') NOT NULL,
+      percentage_threshold DECIMAL(5,2),
+      specific_approver_id VARCHAR(36),
+      hybrid_percentage DECIMAL(5,2),
+      hybrid_approver_id VARCHAR(36),
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+      FOREIGN KEY (specific_approver_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (hybrid_approver_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS expense_approval_requests (
+      id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      expense_id VARCHAR(36) NOT NULL,
+      current_approver_id VARCHAR(36) NOT NULL,
+      step_order INT NOT NULL,
+      status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+      comment TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
+      FOREIGN KEY (current_approver_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Insert default admin user if no users exist
   const [users] = await pool.execute('SELECT COUNT(*) as count FROM users');
   const userCount = (users as any)[0].count;

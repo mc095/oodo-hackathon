@@ -33,6 +33,50 @@ export type Company = {
     country: string;
 };
 
+export type ApprovalWorkflow = {
+    id: string;
+    companyId: string;
+    name: string;
+    isActive: boolean;
+    steps: ApprovalStep[];
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ApprovalStep = {
+    id: string;
+    workflowId: string;
+    stepOrder: number;
+    approverType: 'Manager' | 'Finance' | 'Director' | 'Specific_User';
+    specificUserId?: string;
+    isManagerApprover: boolean;
+    createdAt: string;
+};
+
+export type ApprovalRule = {
+    id: string;
+    companyId: string;
+    ruleType: 'Percentage' | 'Specific_Approver' | 'Hybrid';
+    percentageThreshold?: number;
+    specificApproverId?: string;
+    hybridPercentage?: number;
+    hybridApproverId?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ExpenseApprovalRequest = {
+    id: string;
+    expenseId: string;
+    currentApproverId: string;
+    stepOrder: number;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    comment?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 // For currency API
 export type CurrencyInfo = {
   [key: string]: string;
