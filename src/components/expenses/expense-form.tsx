@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { receiptOcrExpenseAutofill } from '@/ai/flows/receipt-ocr-expense-autofill';
 import { Separator } from '../ui/separator';
 import { Expense } from '@/lib/types';
+import { convertCurrency, getCountries, formatCurrency } from '@/lib/currency-utils';
 
 const formSchema = z.object({
   vendor: z.string().min(2, 'Vendor must be at least 2 characters.'),
@@ -55,6 +56,9 @@ type ExpenseFormProps = {
 export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [isConverting, setIsConverting] = React.useState(false);
+  const [countries, setCountries] = React.useState<Array<{name: string, code: string, currency: string, currencyName: string}>>([]);
+  const [convertedAmount, setConvertedAmount] = React.useState<number | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<ExpenseFormValues>({
@@ -66,6 +70,59 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
       description: ''
     },
   });
+
+  // Load countries on component mount
+  React.useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const countriesData = await getCountries();
+        setCountries(countriesData);
+      } catch (error) {
+        console.error('Error loading countries:', error);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  const handleCurrencyConversion = async () => {
+    const amount = form.getValues('amount');
+    const currency = form.getValues('currency');
+    
+    if (!amount || amount <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Amount',
+        description: 'Please enter a valid amount before converting currency.'
+      });
+      return;
+    }
+
+    if (currency === 'USD') {
+      toast({
+        title: 'No Conversion Needed',
+        description: 'Amount is already in USD.'
+      });
+      return;
+    }
+
+    setIsConverting(true);
+    try {
+      const result = await convertCurrency(currency, 'USD', amount);
+      setConvertedAmount(result.convertedAmount);
+      toast({
+        title: 'Currency Converted',
+        description: `${formatCurrency(amount, currency)} = ${formatCurrency(result.convertedAmount, 'USD')}`
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Conversion Failed',
+        description: 'Could not convert currency. Please try again.'
+      });
+    } finally {
+      setIsConverting(false);
+    }
+  };
 
   async function onSubmit(values: ExpenseFormValues) {
     const { receipt, ...expenseData } = values;
@@ -205,7 +262,10 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                 <FormItem>
                   <FormLabel>Currency</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setConvertedAmount(null); // Reset conversion when currency changes
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -214,10 +274,20 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="CAD">CAD</SelectItem>
+                      {countries.length > 0 ? (
+                        countries.slice(0, 20).map((country) => (
+                          <SelectItem key={country.currency} value={country.currency}>
+                            {country.currency} - {country.currencyName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                          <SelectItem value="CAD">CAD</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -225,6 +295,33 @@ export function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
               )}
             />
           </div>
+
+          {/* Currency Conversion */}
+          {form.watch('currency') !== 'USD' && (
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Convert to USD</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCurrencyConversion}
+                  disabled={isConverting || !form.watch('amount') || form.watch('amount') <= 0}
+                >
+                  {isConverting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Convert'
+                  )}
+                </Button>
+              </div>
+              {convertedAmount && (
+                <p className="text-sm text-muted-foreground">
+                  {formatCurrency(form.watch('amount'), form.watch('currency'))} = {formatCurrency(convertedAmount, 'USD')}
+                </p>
+              )}
+            </div>
+          )}
           <FormField
             control={form.control}
             name="date"
